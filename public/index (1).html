@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solana Buildmap: pick your route</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F0FF;--ink:#0E0B1F;--mute:#4E4875;--panel:#fff;--line:#CFC8F5;--violet:#6B3CFF;--mint:#19E6A8;--sun:#FFD23F;--onsun:#0E0B1F;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E0B1F;--ink:#F2F0FF;--mute:#B2ABDA;--panel:#1A1534;--line:#2E2757}}
+:root[data-theme="dark"]{--bg:#0E0B1F;--ink:#F2F0FF;--mute:#B2ABDA;--panel:#1A1534;--line:#2E2757}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 "DM Sans",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+h1,h2,h3{font-family:Syne,"Helvetica Neue",Arial,sans-serif;margin:0;line-height:1}
+.mono{font-family:"Space Mono",ui-monospace,monospace}
+a:focus-visible,button:focus-visible{outline:4px solid var(--violet);outline-offset:3px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+.logo{font:800 22px Syne,sans-serif;color:var(--ink);text-decoration:none}
+.logo i{display:inline-block;width:14px;height:14px;background:var(--mint);border:3px solid var(--ink);border-radius:50%;margin-right:8px}
+.tick{font:400 13px "Space Mono",monospace;border:3px solid var(--ink);border-radius:999px;padding:4px 12px;background:var(--panel)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;padding:32px 0 48px}
+h1{font-size:clamp(42px,8vw,92px);font-weight:800;letter-spacing:-.04em}
+h1 mark{background:var(--sun);color:var(--onsun);padding:0 .1em;border:3px solid var(--ink);display:inline-block;transform:rotate(-2deg)}
+.lede{font-size:20px;color:var(--mute);max-width:30em;margin:22px 0 26px}
+.btn{display:inline-block;background:var(--violet);color:#fff;font:700 17px "DM Sans",sans-serif;text-decoration:none;padding:14px 24px;border:3px solid var(--ink);border-radius:12px;box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.map{width:100%;height:auto;border:3px solid var(--ink);border-radius:18px;background:var(--panel);box-shadow:8px 8px 0 var(--ink)}
+.band{background:var(--ink);color:var(--bg);overflow:hidden;white-space:nowrap;padding:12px 0;font:700 15px "Space Mono",monospace;letter-spacing:.08em}
+.band span{display:inline-block;animation:slide 28s linear infinite}
+@keyframes slide{to{transform:translateX(-50%)}}
+h2{font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin-bottom:8px}
+.sub{color:var(--mute);margin:0 0 28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px}
+.card{all:unset;box-sizing:border-box;cursor:pointer;background:var(--panel);border:3px solid var(--ink);border-radius:14px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;display:block}
+.card:focus-visible{outline:4px solid var(--violet);outline-offset:3px}
+.card[aria-pressed="true"]{background:var(--sun);color:var(--onsun);transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink)}
+.art{position:relative;aspect-ratio:10/7;background:var(--c);border-bottom:3px solid var(--ink)}
+.art svg,.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card b{display:block;font:800 19px Syne,sans-serif;padding:12px 14px 0}
+.card small{display:block;padding:4px 14px 14px;font-size:14px;opacity:.8}
+.detail{margin:36px 0 56px;background:var(--panel);border:3px solid var(--ink);border-radius:18px;box-shadow:8px 8px 0 var(--ink);padding:30px;display:grid;grid-template-columns:1.2fr 1fr;gap:32px}
+.detail h2{font-size:clamp(28px,4vw,42px)}
+.detail p{color:var(--mute);margin:12px 0 18px}
+h3{font-size:18px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em}
+.repo{display:block;text-decoration:none;color:var(--ink);padding:12px 14px;border:3px solid var(--ink);border-radius:10px;margin-bottom:10px}
+.repo:hover{background:var(--mint);color:#0E0B1F}
+.repo b{font:700 15px "Space Mono",monospace}
+.repo span{display:block;font-size:14px;color:inherit;opacity:.8}
+.route{list-style:none;margin:0;padding:0 0 0 18px;border-left:4px dashed var(--violet)}
+.route li{position:relative;margin:0 0 18px;padding-left:22px}
+.route li::before{content:attr(data-n);position:absolute;left:-36px;top:0;width:28px;height:28px;border:3px solid var(--ink);border-radius:50%;background:var(--mint);color:#0E0B1F;font:700 13px/22px "Space Mono",monospace;text-align:center}
+.why{border-top:3px solid var(--ink);padding:26px 0 48px;color:var(--mute);font-size:15px;max-width:48em}
+@media (max-width:760px){.hero,.detail{grid-template-columns:1fr}.tick{display:none}}
+@media (prefers-reduced-motion:reduce){.band span{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><a class="logo" href="#top"><i></i>Buildmap</a><span class="tick" aria-hidden="true">slot <span id="slot">0</span></span></nav>
+<header class="hero" id="top">
+<div>
+<h1>Pick a route. <mark>Ship</mark> on Solana.</h1>
+<p class="lede">Tell us what you want to build. Get the open-source repos, the docs, and a four-stop plan for your first week.</p>
+<a class="btn" href="#routes">Choose your route</a>
+</div>
+<svg class="map" viewBox="0 0 400 320" role="img" aria-label="Illustrated route map with pins">
+<g fill="none" stroke="var(--line)" stroke-width="3"><ellipse cx="200" cy="170" rx="170" ry="120"/><ellipse cx="210" cy="165" rx="125" ry="85"/><ellipse cx="220" cy="160" rx="80" ry="52"/><ellipse cx="228" cy="156" rx="36" ry="22"/></g>
+<path d="M50 265C110 215 130 255 195 205S290 150 330 85" fill="none" stroke="var(--violet)" stroke-width="5" stroke-dasharray="4 12" stroke-linecap="round"/>
+<g stroke="var(--ink)" stroke-width="4"><circle cx="50" cy="265" r="14" fill="var(--sun)"/><circle cx="195" cy="205" r="14" fill="var(--mint)"/><circle cx="330" cy="85" r="14" fill="var(--violet)"/></g>
+<text x="76" y="262" font-family="Space Mono,monospace" font-size="15" font-weight="700" fill="var(--ink)">idea</text>
+<text x="218" y="202" font-family="Space Mono,monospace" font-size="15" font-weight="700" fill="var(--ink)">devnet</text>
+<text x="262" y="66" font-family="Space Mono,monospace" font-size="15" font-weight="700" fill="var(--ink)">mainnet</text>
+</svg>
+</header>
+</div>
+<div class="band" aria-hidden="true"><span>PAYMENTS &bull; WALLETS &bull; LOCAL TESTING &bull; EXPLORERS &bull; SDKs &bull; VALIDATORS &bull; PAYMENTS &bull; WALLETS &bull; LOCAL TESTING &bull; EXPLORERS &bull; SDKs &bull; VALIDATORS &bull; </span></div>
+<div class="wrap">
+<section id="routes" style="padding-top:56px">
+<h2>Where are you headed?</h2>
+<p class="sub">Tap a card to open that route.</p>
+<div class="cards" id="cards"></div>
+<article class="detail" id="detail" aria-live="polite"></article>
+</section>
+<div class="why">Why these routes: they follow what people ask for in developer communities such as r/solanadev (checkout flows, how games are built, token and explorer tools) and what the Solana Foundation and Anza maintain on GitHub. Stars and activity change, so check each repo first. Independent project, not affiliated with the Solana Foundation. Want your own photos? Drop <span class="mono">pay.jpg</span>, <span class="mono">dapp.jpg</span>, <span class="mono">test.jpg</span>, <span class="mono">explore.jpg</span>, <span class="mono">lang.jpg</span> or <span class="mono">node.jpg</span> into the <span class="mono">public/images</span> folder and they replace the illustrations.</div>
+</div>
+<script>
+var S='stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"';
+var ART={
+pay:'<rect x="40" y="38" width="120" height="76" rx="10" fill="#fff" '+S+'/><rect x="40" y="56" width="120" height="16" fill="var(--ink)"/><circle cx="140" cy="94" r="14" fill="var(--sun)" '+S+'/>',
+dapp:'<rect x="70" y="14" width="60" height="112" rx="12" fill="#fff" '+S+'/><circle cx="100" cy="58" r="16" fill="var(--mint)" '+S+'/><rect x="82" y="88" width="36" height="12" rx="6" fill="var(--sun)" '+S+'/>',
+test:'<rect x="30" y="26" width="140" height="92" rx="10" fill="#0E0B1F" '+S+'/><path d="M48 56l14 10-14 10" fill="none" stroke="var(--mint)" stroke-width="5" stroke-linecap="round"/><rect x="74" y="72" width="40" height="6" fill="var(--sun)"/><rect x="48" y="94" width="76" height="6" fill="#8F86C9"/>',
+explore:'<g '+S+'><rect x="28" y="30" width="34" height="34" fill="#fff"/><rect x="70" y="30" width="34" height="34" fill="var(--sun)"/><rect x="28" y="72" width="34" height="34" fill="var(--mint)"/><rect x="70" y="72" width="34" height="34" fill="#fff"/><circle cx="136" cy="64" r="26" fill="none"/></g><path d="M156 84l20 24" stroke="var(--ink)" stroke-width="8" stroke-linecap="round"/>',
+lang:'<text x="100" y="92" text-anchor="middle" font-family="Syne,sans-serif" font-weight="800" font-size="72" fill="#fff" stroke="var(--ink)" stroke-width="4" paint-order="stroke">{ }</text>',
+node:'<g '+S+'><rect x="42" y="22" width="116" height="30" rx="6" fill="#fff"/><rect x="42" y="58" width="116" height="30" rx="6" fill="#fff"/><rect x="42" y="94" width="116" height="30" rx="6" fill="#fff"/></g><g fill="var(--ink)"><circle cx="58" cy="37" r="5"/><circle cx="58" cy="73" r="5"/><circle cx="58" cy="109" r="5"/></g><g fill="var(--mint)"><rect x="110" y="32" width="36" height="10"/><rect x="110" y="68" width="36" height="10"/><rect x="110" y="104" width="36" height="10"/></g>'
+};
+var COL=['var(--violet)','var(--mint)','var(--sun)'];
+var G=[
+{id:'pay',t:'Take payments',s:'Checkout and payment links',d:'Let customers pay you in SOL or stablecoins without a middleman. Start from the Solana Foundation\u2019s pay repo and keep the flow to one button.',r:[['solana-foundation/pay','https://github.com/solana-foundation/pay','Rust, the most-starred repo in the Solana Foundation org.'],['solana-foundation/pay-kit','https://github.com/solana-foundation/pay-kit','Companion kit from the same org.'],['anza-xyz/wallet-adapter','https://github.com/anza-xyz/wallet-adapter','Connect customers\u2019 wallets from a web page.']],p:['Read the pay repo README and run its example.','Test on devnet with a free test wallet.','Add a confirmation screen that shows the transaction link.','Move to mainnet only after a full refund test.']},
+{id:'dapp',t:'Wallet-connected app',s:'Front end that signs transactions',d:'The fastest route to a working app: scaffold from the official templates, then add one on-chain action.',r:[['solana-foundation/templates','https://github.com/solana-foundation/templates','Official templates for the create-solana-dapp CLI.'],['solana-foundation/create-solana-dapp','https://github.com/solana-foundation/create-solana-dapp','The CLI that scaffolds a new app.'],['anza-xyz/wallet-adapter','https://github.com/anza-xyz/wallet-adapter','Modular TypeScript wallet adapters and components.']],p:['Scaffold an app with create-solana-dapp.','Connect a wallet and show its SOL balance.','Add one button that sends a devnet transaction.','Deploy the front end.']},
+{id:'test',t:'Test without risk',s:'Run a local network',d:'Run a simulated Solana network on your own machine so every test is fast and free.',r:[['solana-foundation/surfpool','https://github.com/solana-foundation/surfpool','Rust, local Solana simulation for development.'],['solana-foundation/solana-developer-platform','https://github.com/solana-foundation/solana-developer-platform','Developer platform from the Foundation.']],p:['Install the local network tool and start it.','Point your app at localhost instead of devnet.','Write one test that fails, then fix it.','Repeat before every deploy.']},
+{id:'explore',t:'Look inside the chain',s:'Explorers and data tools',d:'Read blocks, accounts and transactions, or build a dashboard people can share. The official explorer is open source, so you can fork it.',r:[['solana-foundation/explorer','https://github.com/solana-foundation/explorer','TypeScript explorer for Solana clusters, MIT licensed.'],['solana-foundation/solana-data-aggregator','https://github.com/solana-foundation/solana-data-aggregator','Python data aggregator behind solana.com/data.']],p:['Run the explorer locally.','Pick one question, such as which programs are busiest.','Query the data and chart it.','Publish the chart with a short explanation.']},
+{id:'lang',t:'Use another language',s:'Go, Rust or TypeScript',d:'Not everything is JavaScript. Backends in Go can talk to the network through a maintained SDK.',r:[['solana-foundation/solana-go','https://github.com/solana-foundation/solana-go','Go SDK and RPC client for Solana.'],['solana.com/docs','https://solana.com/docs','Official docs for every client library.']],p:['Install the SDK for your language.','Fetch an account balance over RPC.','Send a devnet transfer from a script.','Wrap it in a small service.']},
+{id:'node',t:'Run validator software',s:'Infrastructure',d:'For infrastructure engineers. Firedancer is Jump Crypto\u2019s independent validator client written in C.',r:[['firedancer-io/firedancer','https://github.com/firedancer-io/firedancer','Jump Crypto\u2019s Solana validator software, written in C.'],['solana.com/docs','https://solana.com/docs','Operator guides in the official docs.']],p:['Read the hardware requirements first.','Start on testnet, not mainnet.','Set up monitoring and alerts.','Only then consider staking.']}
+];
+function esc(s){return s.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var cEl=document.getElementById('cards'),dEl=document.getElementById('detail');
+function show(i,scroll){
+var g=G[i];
+[].forEach.call(cEl.children,function(b,j){b.setAttribute('aria-pressed',j===i)});
+dEl.innerHTML='<div><h2>'+esc(g.t)+'</h2><p>'+esc(g.d)+'</p><h3>Start with these</h3>'+
+g.r.map(function(r){return '<a class="repo" href="'+r[1]+'" target="_blank" rel="noopener"><b>'+esc(r[0])+'</b><span>'+esc(r[2])+'</span></a>'}).join('')+
+'</div><div><h3>Your first week</h3><ol class="route" style="list-style:none">'+g.p.map(function(x,n){return '<li data-n="'+(n+1)+'">'+esc(x)+'</li>'}).join('')+'</ol></div>';
+if(scroll)dEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+G.forEach(function(g,i){
+var b=document.createElement('button');b.type='button';b.className='card';
+b.style.setProperty('--c',COL[i%3]);
+b.innerHTML='<div class="art"><svg viewBox="0 0 200 140" aria-hidden="true">'+ART[g.id]+'</svg><img src="images/'+g.id+'.jpg" alt="" onerror="this.remove()"></div><b>'+esc(g.t)+'</b><small>'+esc(g.s)+'</small>';
+b.addEventListener('click',function(){show(i,true)});
+cEl.appendChild(b);
+});
+show(0,false);
+var n=0,el=document.getElementById('slot');setInterval(function(){n++;el.textContent=n.toLocaleString()},400);
+</script>
+</body>
+</html>
