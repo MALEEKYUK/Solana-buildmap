@@ -87,7 +87,8 @@ async function getRepos() {
   await Promise.all(REPOS.map(async n => {
     try {
       const r = await fetch('https://api.github.com/repos/' + n, { headers, signal: AbortSignal.timeout(8000) });
-      if (r.ok) { const j = await r.json(); out[n] = { stars: j.stargazers_count, pushed: j.pushed_at }; }
+      if (r.ok) { const j = await r.json(); const lic = j.license ? (j.license.spdx_id && j.license.spdx_id !== 'NOASSERTION' ? j.license.spdx_id : j.license.name) : null;
+        out[n] = { stars: j.stargazers_count, pushed: j.pushed_at, desc: j.description || null, archived: !!j.archived, license: lic, language: j.language || null }; }
     } catch (e) {}
   }));
   if (Object.keys(out).length) repoCache = { t: Date.now(), v: out };
