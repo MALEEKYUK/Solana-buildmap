@@ -210,7 +210,7 @@ footer p{max-width:52em;margin:0 0 10px}
 </main>
 
 <footer><div class="wrap">
-<p>Routes follow what developers ask for in communities like r/solanadev and what the Solana Foundation and Anza maintain on GitHub. Stars and activity change, so check each repo before you rely on it.</p>
+<p>Routes follow what developers ask for in communities like r/solanadev and what the Solana Foundation and Anza maintain on GitHub. Stars and activity change, so check each repo before you rely on it. Stars, licenses, languages and update dates load live from the GitHub API.</p>
 <p>Independent project. Not affiliated with the Solana Foundation.</p>
 </div></footer>
 
@@ -290,7 +290,14 @@ if(s.fee!==null&&s.fee!==undefined)$('sFee').textContent='Median priority fee ri
 poll();setInterval(poll,4000);
 setInterval(function(){if(live)add()},400);
 var REPOS=null;
-function stars(){if(!REPOS)return;[].forEach.call(document.querySelectorAll('.st'),function(e){var d=REPOS[e.getAttribute('data-r')];if(d){var k=d.stars>=1000?(d.stars/1000).toFixed(1)+'k':d.stars;e.textContent='\u2605 '+k+'  \u00b7  updated '+new Date(d.pushed).toLocaleDateString(undefined,{month:'short',year:'numeric'})}})}
+function stars(){if(!REPOS)return;[].forEach.call(document.querySelectorAll('.st'),function(e){var d=REPOS[e.getAttribute('data-r')];if(!d)return;
+var k=d.stars>=1000?(d.stars/1000).toFixed(1)+'k':d.stars,bits=['\u2605 '+k];
+if(d.language)bits.push(d.language);if(d.license)bits.push(d.license);
+bits.push('updated '+new Date(d.pushed).toLocaleDateString(undefined,{month:'short',year:'numeric'}));
+e.textContent=(d.archived?'ARCHIVED \u00b7 ':'')+bits.join('  \u00b7  ');
+if(d.archived)e.style.color='#ff8a5c';
+var p=e.previousElementSibling;if(p&&d.desc)p.textContent=d.desc.length>140?d.desc.slice(0,137)+'...':d.desc;
+})}
 fetch('/api/repos').then(function(r){return r.json()}).then(function(j){REPOS=j;stars()}).catch(function(){});
 var KNOWN={'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v':'USDC','Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB':'USDT'};
 function el(t,txt,cls){var e=document.createElement(t);if(txt!==undefined)e.textContent=txt;if(cls)e.className=cls;return e}
