@@ -76,7 +76,7 @@ button.btn{border:0;cursor:pointer}
 .cw{position:absolute;left:calc(50% - 60px);top:12%;width:120px;height:120px;perspective:800px;animation:float 4s ease-in-out infinite;filter:drop-shadow(0 0 26px rgba(var(--mr),.45))}
 @keyframes float{50%{transform:translateY(-14px)}}
 .cube{position:absolute;inset:0;transform-style:preserve-3d}
-.f{position:absolute;inset:0;border:2px solid var(--m);background:rgba(var(--mr),.1);box-shadow:inset 0 0 24px rgba(var(--mr),.25);display:grid;place-items:center;font:700 22px ui-monospace,Menlo,monospace;color:var(--m)}
+.f{-webkit-backface-visibility:hidden;backface-visibility:hidden;position:absolute;inset:0;border:2px solid var(--m);background:rgba(var(--mr),.1);box-shadow:inset 0 0 24px rgba(var(--mr),.25);display:grid;place-items:center;font:700 22px ui-monospace,Menlo,monospace;color:var(--m)}
 .f1{transform:translateZ(60px)}.f2{transform:rotateY(90deg) translateZ(60px)}.f3{transform:rotateY(180deg) translateZ(60px)}.f4{transform:rotateY(-90deg) translateZ(60px)}.f5{transform:rotateX(90deg) translateZ(60px)}.f6{transform:rotateX(-90deg) translateZ(60px)}
 .chip{position:absolute;left:0;top:0;white-space:nowrap;font:600 14px Inter,sans-serif;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(var(--bgr),.92);will-change:transform}
 .chip::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--m);margin-right:8px}
@@ -198,7 +198,8 @@ footer p{max-width:52em;margin:0 0 10px}
 <div><label for="paynet">Network to watch</label><select id="paynet"><option value="devnet">Devnet (free test SOL)</option><option value="mainnet">Mainnet (real SOL)</option></select></div>
 <div class="full"><label for="paylab">Label shown in the wallet</label><input id="paylab" type="text" maxlength="60" value="Buildmap test"></div>
 </div>
-<div class="wrow" style="margin-top:16px"><button class="btn p" type="submit">Create request</button><a href="https://faucet.solana.com" target="_blank" rel="noopener" style="color:var(--m);font-size:14px">Get free devnet SOL</a></div></form>
+<div class="wrow" style="margin-top:16px"><button class="btn p" type="submit">Create request</button><button class="btn s" id="airdrop" type="button">Get 1 devnet SOL</button><a href="https://faucet.solana.com" target="_blank" rel="noopener" style="color:var(--m);font-size:14px">or use the web faucet</a></div></form>
+<div class="pst" id="airst" aria-live="polite"></div>
 <div class="qrbox" id="qrbox" hidden><canvas id="qr" width="240" height="240" aria-label="QR code for the payment request"></canvas><div style="flex:1;min-width:240px"><div class="plink" id="plink"></div><button class="btn s" id="pcopy" type="button">Copy link</button><div class="pst" id="payst" aria-live="polite"></div></div></div>
 </div></section></div>
 <div class="wrap"><section id="routes">
@@ -308,7 +309,7 @@ out.textContent='';
 out.appendChild(el('b',j.sol.toLocaleString(undefined,{maximumFractionDigits:6})+' SOL'));
 out.appendChild(document.createTextNode(' on mainnet'));
 var tk=j.tokens.slice().sort(function(x,y){return (KNOWN[y.mint]?1:0)-(KNOWN[x.mint]?1:0)});
-if(tk.length){out.appendChild(el('div','Tokens','wh'));var ul=el('ul',undefined,'wl');tk.slice(0,5).forEach(function(t){var li=el('li');li.appendChild(el('span',KNOWN[t.mint]||t.mint.slice(0,4)+'...'+t.mint.slice(-4)));li.appendChild(el('span',t.amount.toLocaleString(undefined,{maximumFractionDigits:4})));ul.appendChild(li)});out.appendChild(ul);if(tk.length>5)out.appendChild(el('div','+ '+(tk.length-5)+' more tokens','feeline'))}
+if(tk.length){out.appendChild(el('div','Tokens','wh'));var ul=el('ul',undefined,'wl');tk.slice(0,5).forEach(function(t){var li=el('li'),lab=KNOWN[t.mint]||(t.symbol?(t.name&&t.name!==t.symbol?t.symbol+' \u00b7 '+t.name:t.symbol):t.mint.slice(0,4)+'...'+t.mint.slice(-4)),ta=el('a',lab);ta.href='https://explorer.solana.com/address/'+t.mint;ta.target='_blank';ta.rel='noopener';li.appendChild(ta);li.appendChild(el('span',t.amount.toLocaleString(undefined,{maximumFractionDigits:4})));ul.appendChild(li)});out.appendChild(ul);if(tk.length>5)out.appendChild(el('div','+ '+(tk.length-5)+' more tokens','feeline'))}
 if(j.txs.length){out.appendChild(el('div','Recent transactions','wh'));var u2=el('ul',undefined,'wl');j.txs.forEach(function(t){var li=el('li');var a2=el('a',t.sig.slice(0,10)+'...');a2.href='https://explorer.solana.com/tx/'+t.sig;a2.target='_blank';a2.rel='noopener';li.appendChild(a2);li.appendChild(el('span',(t.ok?'':'Failed \u00b7 ')+(t.time?new Date(t.time*1000).toLocaleString():'')));u2.appendChild(li)});out.appendChild(u2)}
 }).catch(function(e){out.textContent=e.message})
 }
@@ -398,6 +399,20 @@ if(!r||!r.length||found)return;found=true;stopPay();checkPay(r[0].signature,to,a
 },3000);
 });
 $('pcopy').addEventListener('click',function(){var t=$('plink').textContent;if(t&&navigator.clipboard)navigator.clipboard.writeText(t).then(function(){$('pcopy').textContent='Copied'})});
+$('airdrop').addEventListener('click',function(){
+var to=$('payto').value.trim(),st=$('airst');
+if(!validAddr(to)){st.textContent='Enter or connect a wallet address first.';return}
+st.textContent='Requesting 1 devnet SOL...';
+fetch('https://api.devnet.solana.com',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'requestAirdrop',params:[to,1000000000]})}).then(function(r){return r.json()}).then(function(j){
+if(j.error)throw new Error(j.error.message||'Airdrop failed');
+var sig=j.result,n=0;st.textContent='Airdrop sent. Waiting for confirmation...';
+var t=setInterval(function(){
+rpcOn(NET.devnet.list,'getSignatureStatuses',[[sig],{searchTransactionHistory:true}]).then(function(r){var x=r&&r.value&&r.value[0];
+if(x&&(x.confirmationStatus==='confirmed'||x.confirmationStatus==='finalized')){clearInterval(t);st.textContent='Done: 1 devnet SOL sent to this address. ';st.appendChild(exLink(sig,'devnet'))}
+else if(++n>30){clearInterval(t);st.textContent='Still waiting. Check the explorer: ';st.appendChild(exLink(sig,'devnet'))}}).catch(function(){})
+},2000)
+}).catch(function(e){st.textContent=(e.message||'Airdrop failed')+'. The devnet faucet limits requests, so try again later or use the web faucet.'})
+});
 </script>
 </body>
 </html>
