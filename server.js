@@ -58,6 +58,32 @@ async function getBalance(addr) {
 }
 
 const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const nameCache = new Map();
+async function resolveNames(mints) {
+  const now = Date.now(), need = [];
+  for (const m of mints) { const c = nameCache.get(m); if (!c || now - c.t > 600000) need.push(m); }
+  for (let i = 0; i < need.length; i += 30) {
+    const batch = need.slice(i, i + 30);
+    try {
+      const r = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + batch.join(','), { headers: { 'User-Agent': 'solana-buildmap' }, signal: AbortSignal.timeout(5000) });
+      const found = {};
+      if (r.ok) {
+        const j = await r.json();
+        for (const p of (j.pairs || [])) {
+          for (const t of [p.baseToken, p.quoteToken]) {
+            if (t && batch.includes(t.address) && !found[t.address] && t.symbol) found[t.address] = { symbol: String(t.symbol).slice(0, 16), name: String(t.name || '').slice(0, 32) };
+          }
+        }
+      }
+      for (const m of batch) nameCache.set(m, { t: now, v: found[m] || null });
+    } catch (e) { console.error('names', e.message); }
+  }
+  if (nameCache.size > 2000) nameCache.clear();
+  const out = {};
+  for (const m of mints) { const c = nameCache.get(m); if (c && c.v) out[m] = c.v; }
+  return out;
+}
+
 async function getWallet(addr) {
   const c = balCache.get('w' + addr);
   if (c && Date.now() - c.t < 5000) return c.v;
@@ -72,6 +98,8 @@ async function getWallet(addr) {
     txs: (sigs.status === 'fulfilled' ? sigs.value : []).map(x => ({ sig: x.signature, time: x.blockTime, ok: !x.err })),
     tokens: (toks.status === 'fulfilled' ? toks.value.value : []).map(a => a.account.data.parsed.info).filter(i => i.tokenAmount.uiAmount > 0).map(i => ({ mint: i.mint, amount: i.tokenAmount.uiAmount })).slice(0, 25)
   };
+  const names = await resolveNames(v.tokens.map(t => t.mint));
+  v.tokens = v.tokens.map(t => Object.assign(t, names[t.mint] || {}));
   if (balCache.size > 500) balCache.clear();
   balCache.set('w' + addr, { t: Date.now(), v });
   return v;
